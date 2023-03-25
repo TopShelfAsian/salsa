@@ -1,14 +1,8 @@
-<<<<<<< Updated upstream
-#!/bin/env python3
-import Node
-import LinkedList
-
-
-=======
 #!/usr/bin/env python3
+import Node from Node
+import LinkedList from LinkedList
 import sys
 import getopt
->>>>>>> Stashed changes
 class Node(object):
     def __init__(self, previousHash, timestamp, caseID, evidenceID, state, dataLength, data):
         self.previousHash = previousHash
@@ -20,8 +14,6 @@ class Node(object):
         self.data = data
         self.next = None
 
-<<<<<<< Updated upstream
-=======
 class LinkedList(object):
     def __init__(self, head=None):
         self.head = head
@@ -200,7 +192,6 @@ def arginit(argv):
 	ll.insert(e4,3)
 	ll.delete(1)
 	print(ll.print())
->>>>>>> Stashed changes
 
 def main():
     arginit(sys.argv)
