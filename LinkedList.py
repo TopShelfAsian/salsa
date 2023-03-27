@@ -36,21 +36,27 @@ class LinkedList(object):
             current = current.next
         return "N/A"
                 
-    def delete(self, value):
-        #Delete first note with a given value
+    def remove(self, id):
+        #Deletes a node given a specified id
         current = self.head
-        if current.evidenceID == value:
-            self.head = current.next
-        else:
-            while current:
-                if current.evidenceID == value:
-                    break
-                prev = current
+        while current:
+            if current.evidenceID == id:
+                if current.state == "CHECKEDIN":
+                    current.state = "RELEASED"
+                    print("Case:" + str(current.caseID))
+                    print("Removed item: " + str(current.evidenceID))
+                    print("\tStatus: " + str(current.state))
+                    print("\tOwner info: NEED TO IMPLEMENT TO TAKE OWNER INFO FROM ARGS & PLACE HERE")
+                    print("\tTime of action:" + str(current.timestamp))
+                    return True
+                else:
+                    #Error Code will need to be generated for this; for example if they do 'echo $?' then it would need to return our predefined integer value for this error
+                    print("Error: Cannot remove an evidence item that is not CHECKEDIN.")
+                    return False
+            else:
                 current = current.next
-            if current == None:
-                return
-            prev.next = current.next
-            current = None
+        print("ERROR: NOT FOUND")
+        return False
 
     def add(self, newElement, position):
         #insert a new node at given position
