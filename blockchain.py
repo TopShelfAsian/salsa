@@ -4,7 +4,6 @@ from LinkedList import LinkedList
 import sys
 import getopt
 
-            
 def arginit(argv):
 	i = 2
 	itemIDs = []
