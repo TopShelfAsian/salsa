@@ -13,11 +13,13 @@ class LinkedList(object):
         else:
             self.head = newNode
 
-    def print(self):
+    def size(self):
         current = self.head
+        count = 0
         while current:
-            print(current.evidenceID)
+            count += 1
             current = current.next
+        return count
     
     def find(self, target):
         current = self.head
@@ -108,7 +110,6 @@ class LinkedList(object):
         #changes to CHECKEDIN state for an evidence item given its item_id
         #should display its case(hash), item_id, new status of evidence, time
         current = self.head
-        test = Node
         while current:
             if current.evidenceID == id:
                 if current.previousHash != None:
@@ -127,4 +128,25 @@ class LinkedList(object):
                 current = current.next
         print("ERROR: NOT FOUND")
         return False
-        
+    
+    def verify(self):
+        #Traverses the blockchain & checks for any error states.
+        #Will return # of blocks & the state of the blockchain.
+        #If the state is ERROR then that means at least one block had an error & will need to return: bad blocks hash, & reason for error.
+        #Parent block not found, same parent block for more than one block, block contents do not match block checksum, trying to checkin/checkout after removing block
+        num = self.size()
+        current = self.head
+        print("Transactions in blockchain: " + str(num))
+        while current:
+            #Do we print all errors or just first one found?
+            if current.state == "ERROR":
+                print("State of blockchain: " + current.state)
+                #needs to be a hash with no hyphens in it
+                print("Bad block: " + current.previousHash)
+                #needs to see the reason for error - possibly add that in to node struct
+                print("NEED TO IMPLEMENT REASON - if parent block issue need to list it's hash(If it has one!) otherwise just print the error")
+                return False
+            else:
+                current = current.next
+        print("State of blockchain: CLEAN") 
+        return True
