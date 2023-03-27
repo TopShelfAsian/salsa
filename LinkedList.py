@@ -51,6 +51,7 @@ class LinkedList(object):
                     return True
                 else:
                     #Error Code will need to be generated for this; for example if they do 'echo $?' then it would need to return our predefined integer value for this error
+                    current.state = "ERROR"
                     print("Error: Cannot remove an evidence item that is not CHECKEDIN.")
                     return False
             else:
@@ -93,6 +94,7 @@ class LinkedList(object):
                     return True
                 else:
                     #Error Code will need to be generated for this; for example if they do 'echo $?' then it would need to return our predefined integer value for this error
+                    current.state = "ERROR"
                     print("Error: Cannot check out a checked out item. Must check it in first.")
                     return False
             else:
@@ -118,6 +120,7 @@ class LinkedList(object):
                     return True
                 else:
                     #Error Code will need to be generated for this; for example if they do 'echo $?' then it would need to return our predefined integer value for this error
+                    current.state = "ERROR"
                     print("Error: Checkin actions may only be performed on evidence items that have already been added to the blockchain. No previous hash found so not added.")
                     return False
             else:
