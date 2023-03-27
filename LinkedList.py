@@ -72,7 +72,7 @@ class LinkedList(object):
     def checkout(self, id):
         #Returns true if found & returns false if not found
         #takes the LL as a param and the item_id
-        # changes to checkout entry for an evidence item given its item_id
+        # changes to CHECKEDOUT state for an evidence item given its item_id
         #should display its case(hash), item_id, new status of evidence, time
         current = self.head
         test = Node
@@ -88,6 +88,31 @@ class LinkedList(object):
                 else:
                     #Error Code will need to be generated for this; for example if they do 'echo $?' then it would need to return our predefined integer value for this error
                     print("Error: Cannot check out a checked out item. Must check it in first.")
+                    return False
+            else:
+                current = current.next
+        print("ERROR: NOT FOUND")
+        return False
+
+    def checkin(self, id):
+        #Returns true if found & returns false if not found
+        #takes the LL as a param and the item_id
+        #changes to CHECKEDIN state for an evidence item given its item_id
+        #should display its case(hash), item_id, new status of evidence, time
+        current = self.head
+        test = Node
+        while current:
+            if current.evidenceID == id:
+                if current.previousHash != None:
+                    current.state = 'CHECKEDIN'
+                    print("Case: " + str(current.caseID))
+                    print("Checked out Item: " + str(current.evidenceID))
+                    print("\t Status: " + str(current.state))
+                    print("\t Time of action: " + str(current.timestamp))
+                    return True
+                else:
+                    #Error Code will need to be generated for this; for example if they do 'echo $?' then it would need to return our predefined integer value for this error
+                    print("Error: Checkin actions may only be performed on evidence items that have already been added to the blockchain. No previous hash found so not added.")
                     return False
             else:
                 current = current.next
