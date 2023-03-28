@@ -1,0 +1,27 @@
+Tasks- Used to track current tasks that are being worked on. Please be sure to add your name so no one attempts your task while you are doing it.
+
+LinkedList.py:
+    1. Need to finish log - RJ
+    2. Need to figure out how to fix "Time of action" format for the timestamp in add, removed, checkin, checkout. Currently have to wrap in str() to be able to print. - RJ
+    3. Need to figure out how to print caseID once for add & print each unique evidence ID's parameters(evidenceID, status, and time of action) - RJ
+    4.
+    
+Node.py:
+    1.Need to make the fix sized/padding for each object in the structs
+    2.
+
+Tasks that have no current file:
+    1. Error codes that we come up with if they break the program/do something their not supposed to
+    2.
+
+============================================================================================================
+Confirmation - Used to double check eachother's resolved Tasks. Once confirmed please put your name.
+
+LinkedList.py:
+    1. Finished verify, checkin, checkout, init, remove, add - Confirmed by:
+
+Node.py:
+    a. Added time data type needed for timestamp - Confirmed by:
+        Refernece from instructions - All timestamps must be stored in UTC and account for the difference between local time and UTC.
+
+=============================================================================================================
