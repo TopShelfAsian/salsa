@@ -3,6 +3,7 @@ from Node import Node
 from LinkedList import LinkedList
 import sys
 import getopt
+from datetime import datetime
 
 def arginit(argv):
 	i = 2

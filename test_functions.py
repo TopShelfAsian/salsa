@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 from Node import Node
 from LinkedList import LinkedList
+from datetime import datetime
 import sys
 import getopt
 
 #Passing functions:
-#   checkout, checkin, remove, verify(still needs a little more detail)
+#   checkout, checkin, remove, verify(still needs a little more detail), init
 #Faiing functions:
-# add, init, log
+# add, log
 def main():
 	print("Testing funtions")
 	print("Note: case ID's last char is the difference")
@@ -24,7 +25,7 @@ def main():
 	#ll.append(e4)
 	#ll.verify()
 	ll.init()
-	#ll.print()
+	ll.print()
     
 
 main()
