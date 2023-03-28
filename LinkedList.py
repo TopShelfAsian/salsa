@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 from Node import Node
+from datetime import datetime
 class LinkedList(object):
     def __init__(self, head=None):
         self.head = head
@@ -54,6 +55,35 @@ class LinkedList(object):
         else:
             current = current.next
         return "N/A"
+    
+    def checkEID(self, id):
+        current = self.head
+        while current:
+            if current.evidenceID == id:
+                return True
+            else:
+                current = current.next
+        return False
+
+    def add(self, cID, eID):
+        #insert a new block into the blockchain given the caseID & the evidenceID
+        current = self.head
+        flag = self.checkEID(eID)
+        if flag == True:
+            #Error Code will need to be generated for this; for example if they do 'echo $?' then it would need to return our predefined integer value for this error
+            print("Error: Evidence ID already exits")
+            return
+        else:
+            newBlock = Node(None, None, cID, eID, "CHECKEDIN", None, None)
+            self.append(newBlock)
+            #NEED TO BE FIXED: if multiple evidence ID's we only print case id once & added item(eid), status, & time of action need to printed for each eID
+            print("Case:" + str(newBlock.caseID))
+            print("Added item: " + str(newBlock.evidenceID))
+            print("\tStatus: " + str(newBlock.state))
+            timeOfAction = datetime.now()
+            iso_timeOfAction = datetime.isoformat(timeOfAction)
+            print("\tTime of action: " + str(timeOfAction))
+            return
                 
     def remove(self, id):
         #Deletes a node given a specified id
@@ -66,7 +96,9 @@ class LinkedList(object):
                     print("Removed item: " + str(current.evidenceID))
                     print("\tStatus: " + str(current.state))
                     print("\tOwner info: NEED TO IMPLEMENT TO TAKE OWNER INFO FROM ARGS & PLACE HERE")
-                    print("\tTime of action:" + str(current.timestamp))
+                    timeOfAction = datetime.now()
+                    iso_timeOfAction = datetime.isoformat(timeOfAction)
+                    print("\tTime of action: " + str(timeOfAction))
                     return True
                 else:
                     #Error Code will need to be generated for this; for example if they do 'echo $?' then it would need to return our predefined integer value for this error
@@ -77,23 +109,6 @@ class LinkedList(object):
                 current = current.next
         print("ERROR: NOT FOUND")
         return False
-
-    def add(self, newElement, position):
-        #insert a new node at given position
-        count = 1
-        current = self.head
-        if position == 1:
-            newElement.next = self.head
-            self.head = newElement
-        while current:
-            if count + 1 == position:
-                newElement.next = current.next
-                current.next = newElement
-                return
-            else:
-                count += 1
-                current = current.next
-        pass
 
     def checkout(self, id):
         #Returns true if found & returns false if not found
@@ -109,7 +124,9 @@ class LinkedList(object):
                     print("Case: " + str(current.caseID))
                     print("Checked out Item: " + str(current.evidenceID))
                     print("\t Status: " + str(current.state))
-                    print("\t Time of action: " + str(current.timestamp))
+                    timeOfAction = datetime.now()
+                    iso_timeOfAction = datetime.isoformat(timeOfAction)
+                    print("\tTime of action: " + str(timeOfAction))
                     return True
                 else:
                     #Error Code will need to be generated for this; for example if they do 'echo $?' then it would need to return our predefined integer value for this error
@@ -134,7 +151,9 @@ class LinkedList(object):
                     print("Case: " + str(current.caseID))
                     print("Checked out Item: " + str(current.evidenceID))
                     print("\t Status: " + str(current.state))
-                    print("\t Time of action: " + str(current.timestamp))
+                    timeOfAction = datetime.now()
+                    iso_timeOfAction = datetime.isoformat(timeOfAction)
+                    print("\tTime of action: " + str(timeOfAction))
                     return True
                 else:
                     #Error Code will need to be generated for this; for example if they do 'echo $?' then it would need to return our predefined integer value for this error
