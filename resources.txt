@@ -3,3 +3,4 @@ Resources:
 https://github.com/fakoredeDamilola/articles/blob/master/code/linkedList.py
 https://openbookproject.net/thinkcs/python/english3e/linked_lists.html
 https://www.geeksforgeeks.org/how-to-import-a-class-from-another-file-in-python/
+https://pynative.com/python-timestamp/

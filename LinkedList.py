@@ -4,6 +4,17 @@ class LinkedList(object):
     def __init__(self, head=None):
         self.head = head
 
+    def init(self):
+        if self.head == None:
+            print("Blockchain file not found. Created INITIAL block.")
+            head = Node(None, 69, None, None, "INITIAL", 0x0E, "Initial block")
+            self.head = head
+            return False
+        else:
+            print("Blockchain file found with INITIAL block.")
+            return True
+
+
     def append(self, newNode):
         current = self.head
         if current:
@@ -20,6 +31,12 @@ class LinkedList(object):
             count += 1
             current = current.next
         return count
+    def print(self):
+        current = self.head
+        while current != None:
+            print("Previous hash: " + str(current.previousHash) + ", Timestamp: " + str(current.timestamp) +", CaseID: " + str(current.caseID) + ", EvidenceID: " + str(current.evidenceID) + ", State: " + str(current.state) +", Data Length: " + str(current.dataLength) +", Data: " + str(current.data))
+            current = current.next
+        return True
     
     def find(self, target):
         current = self.head
