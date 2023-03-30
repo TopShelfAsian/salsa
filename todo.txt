@@ -10,6 +10,9 @@ Node.py:
     1.Need to make the fix sized/padding for each object in the structs
     2.
 
+Blockchain.py:
+    1. Merged the logic from LinkedList.py & Blockchain.py to be able to call the functions during program run time - RJ 
+
 Tasks that have no current file:
     1. Error codes that we come up with if they break the program/do something their not supposed to
     2.
@@ -18,10 +21,10 @@ Tasks that have no current file:
 Confirmation - Used to double check eachother's resolved Tasks. Once confirmed please put your name.
 
 LinkedList.py:
-    1. Finished verify, checkin, checkout, init, remove, add - Confirmed by:
+    1. Finished verify, checkin, checkout, init, remove, add(RJ) - Confirmed by:
 
 Node.py:
-    a. Added time data type needed for timestamp - Confirmed by:
+    a. Added time data type needed for timestamp(RJ) - Confirmed by:
         Refernece from instructions - All timestamps must be stored in UTC and account for the difference between local time and UTC.
 
 =============================================================================================================
