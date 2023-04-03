@@ -89,15 +89,18 @@ class LinkedList(object):
             temp = next
         self.head = previous
     
-    def log(self, eID, count):
+    def log(self, eID, count, cID):
         log_ll = LinkedList()
         #made it the node after head bc I don't think we need to print head in log 
         #This covers the most basic test case that they call log with no flags
-        if count == 0 & eID == None:
+        if count == 0 & eID == None & cID == None:
             log_ll = self
             #reverses the LL so it prints the ALL the LL
             log_ll.reverseLL()
             log_ll.printLog()
+            return
+        elif eID != None:
+
             return
 
 
@@ -115,7 +118,7 @@ class LinkedList(object):
             newBlock = Node(None, None, cID, eID, "CHECKEDIN", None, None)
             self.append(newBlock)
             #NEED TO BE FIXED: if multiple evidence ID's we only print case id once & added item(eid), status, & time of action need to printed for each eID
-            print("Case:" + str(newBlock.caseID))
+            #print("Case:" + str(newBlock.caseID))
             print("Added item: " + str(newBlock.evidenceID))
             print("\tStatus: " + str(newBlock.state))
             timeOfAction = datetime.now()
