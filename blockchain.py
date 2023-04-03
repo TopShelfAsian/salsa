@@ -82,15 +82,17 @@ def arginit(argv):
 			#Fetch caseID of block with matching itemID and block info
 				log_ll.printLog()	
 			#elif argv[i] == "-n": Set number of log entries
-			
+				count = i+1
+				log_ll.log(None, count, None)
 			#elif argv[i] == "-i": # Find log entries with matched itemID
 				evidenceID = i+1
-				log_ll.log(evidenceID, 0)
-			
+				log_ll.log(evidenceID, 0, None)
 			#elif argv[i] == "-c": # Find log entries with matched caseID
+				caseID = i+1
+				log_ll.log(None, 0, caseID)
 			
 			#else: # Print all contents of the log. This will be in the oldest to newest changes
-				log_ll.log(None, 0)
+				log_ll.log(None, 0, None)
 		else:
 			exit(3)
 	elif argv[1] == "remove":
