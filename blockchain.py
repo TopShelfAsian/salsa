@@ -5,75 +5,23 @@ import hashlib
 import collections
 import struct
 import os
-class Node(object):
-    def __init__(self, previousHash, timestamp, caseID, evidenceID, state, dataLength, data):
-        self.previousHash = previousHash
-        self.timestamp = timestamp
-        self.caseID = caseID
-        self.evidenceID = evidenceID
-        self.state = state
-        self.dataLength = dataLength
-        self.data = data
-        self.next = None
+import time
 
-class LinkedList(object):
-    def __init__(self, head=None):
-        self.head = head
+block_layout = struct.Struct(b'32s d 16s I 12s I')
+block_datainit_layout = struct.Struct(b'14s ')
+block_data_layout = struct.Struct('0s ') 
+BC_STATS = collections.namedtuple('BC_STATS', ['Previous_Hash', 'Timestamp', 'Case_ID', 'Evidence_Item_ID', 'State', 'Data_Length'])
+BC_DATA = collections.namedtuple('BC_DATA', ['Data'])
+bc_list = collections.namedtuple('bc_list', ['Case','ID', 'Status', 'Time'])
+bc_checkout = collections.namedtuple('bc_checkout', ['ID', 'Status'])
 
-    def append(self, newNode):
-        current = self.head
-        if current:
-            while current.next:
-                current = current.next
-            current.next = newNode
-        else:
-            self.head = newNode
-                
-    def delete(self, value):
-        #Delete first note with a given value
-        current = self.head
-        if current.evidenceID == value:
-            self.head = current.next
-        else:
-            while current:
-                if current.evidenceID == value:
-                    break
-                prev = current
-                current = current.next
-            if current == None:
-                return
-            prev.next = current.next
-            current = None
-
-    def insert(self, newElement, position):
-        #insert a new node at given position
-        count = 1
-        current = self.head
-        if position == 1:
-            newElement.next = self.head
-            self.head = newElement
-        while current:
-            if count + 1 == position:
-                newElement.next = current.next
-                current.next = newElement
-                return
-            else:
-                count += 1
-                current = current.next
-        pass
-
-    def print(self):
-        current = self.head
-        while current:
-            print(current.evidenceID)
-            current = current.next
-            
+	
 def arginit(argv):
-	BC_STATS = collections.namedtuple('BC_STATS', ['Previous_Hash', 'Timestamp', 'Case_ID', 'Evidence_Item_ID', 'State', 'Data_Length'])
-	BC_DATA = collections.namedtuple('BC_DATA', ['Data'])
-	bc_list = collections.namedtuple('bc_list', ['Case','ID', 'Status', 'Time'])
-	bc_checkout = collections.namedtuple('bc_checkout', ['ID', 'Status'])
-	stored_bc = struct.pack('32s d 16s I 12s I', str.encode(""), 0, str.encode(""), 0, str.encode(""), 0)
+	key = 'BCHOC_FILE_PATH'
+	if key in os.environ:
+		filePath = os.environ[key]
+	else:
+		filePath = "bchocout"
 	i = 2
 	itemIDs = []
 	if (len(argv) == 1):
@@ -163,7 +111,7 @@ def arginit(argv):
 						print(" Owner info: " + argv[i+1])
 					print(" Time of action: ")
 				else:
-					exit(3)
+					sys.exit(3)
 					
 			else:
 				exit(3)
@@ -171,21 +119,29 @@ def arginit(argv):
 			exit(3)	
 	elif argv[1] == "init":
 		#Check if head node is made.
-		key = 'BCHOC_FILE_PATH'
-		nodeFound = False
-		if key in os.environ:
-			filePath = os.environ[key]
-		else:
-			filePath = "blockchain"
 		try:
 			fileRead = open(filePath, 'rb')
-			#bcstats = BC_STATS(
-		except:
-			print("Cannot create file.")
-		if nodeFound == False:
-			print("Blockchain file not found. Created INITIAL block.")
-		else:
+			bcstats = fileRead.read(block_layout.size)
+			bcdata = fileRead.read(block_datainit_layout.size)
+			bcstats = BC_STATS._make(block_layout.unpack(bcstats))
+			print(bcstats)
+			bcdata = BC_DATA._make(block_datainit_layout.unpack(bcdata))
+			print(bcdata)
+			fileRead.close()
 			print("Blockchain file found with INITIAL block.")
+			exit(0)
+		except FileNotFoundError as e:
+			fileWrite = open(filePath, 'wb')
+			inits = BC_STATS(str.encode("None"), time.time(), str.encode("None"), 0, str.encode("INITIAL"), 14)
+			initd = BC_DATA(str.encode("Initial block"))
+			inits = block_layout.pack(*inits)
+			initd = block_datainit_layout.pack(*initd)
+			fileWrite.write(inits)
+			fileWrite.write(initd)
+			fileWrite.close()
+			print("Blockchain file not found. Created INITIAL block.")
+			exit(0)
+
 			
 	elif argv[1] == "verify":
 		numNodes = 0 # Check blockchain file and find number of Nodes.
