@@ -84,11 +84,15 @@ def arginit(argv):
 							if caseID[8] != "-":
 								newcaseID = caseID[:8]+'-'+caseID[8:12]+'-'+caseID[12:16]+'-'+caseID[16:20]+'-'+caseID[20:]
 								print("Case: " + newcaseID)
-								caseInt = int(caseID, 16)
+								caseBytes = bytearray.fromhex(caseID)
+								caseBytes.reverse()
+								print(caseBytes)
 							else:
 								newcaseID = caseID
 								caseID = caseID.replace('-', '')
-								caseInt = int(caseID, 16)
+								caseBytes = bytearray.fromhex(caseID)
+								caseBytes.reverse()
+								print(caseBytes)
 								print("Case: " + newcaseID)
 							print("Added item: " + itemIDs[numitems])
 							#TO DO: Add caseID, itemID to blockchain Node, establish Node
@@ -97,7 +101,7 @@ def arginit(argv):
 							print("\tTime of action: " + currTime.strftime("%Y-%m-%dT%H:%M:%S.%fZ"))
 							if initOnly == True:
 								fileWrite = open(filePath, 'ab') #APPEND to bc file, must use 'ab'
-								secondst = BC_STATS(str.encode(""), datetime.timestamp(currTime), str.encode(str(caseInt)), int(itemIDs[numitems]), str.encode("CHECKEDIN"), 0)
+								secondst = BC_STATS(str.encode(""), datetime.timestamp(currTime), caseBytes, int(itemIDs[numitems]), str.encode("CHECKEDIN"), 0)
 								secondst = block_layout.pack(*secondst)
 								print(secondst)
 								fileWrite.write(secondst)
@@ -108,7 +112,7 @@ def arginit(argv):
 								block256.update(bcstats)
 								fileWrite = open(filePath, 'ab') #APPEND to bc file, must use 'ab'
 
-								blockst = BC_STATS(str.encode(block256.hexdigest()), datetime.timestamp(currTime), str.encode(str(caseInt)), int(itemIDs[numitems]), str.encode("CHECKEDIN"), 0)
+								blockst = BC_STATS(str.encode(block256.hexdigest()), datetime.timestamp(currTime), caseBytes, int(itemIDs[numitems]), str.encode("CHECKEDIN"), 0)
 								blockst = block_layout.pack(*blockst)
 								print(blockst)
 								fileWrite.write(blockst)
