@@ -24,6 +24,7 @@ def arginit(argv):
 		filePath = os.environ[key]
 	else:
 		filePath = "bchocout"
+	logPath = "logfile.txt"
 	i = 2
 	itemIDs = []
 	if (len(argv) == 1): # No arugments to the program, abort
@@ -98,6 +99,12 @@ def arginit(argv):
 							print("\tStatus: CHECKEDIN")
 							currTime = datetime.utcnow()
 							print("\tTime of action: " + currTime.strftime("%Y-%m-%dT%H:%M:%S.%fZ"))
+							fileWrite = open(logPath, 'a') # Add action to logfile.
+							fileWrite.write(newcaseID + "\n")
+							fileWrite.write(itemIDs[numitems] + "\n")
+							fileWrite.write("CHECKEDIN" + "\n")
+							fileWrite.write(currTime.strftime("%Y-%m-%dT%H:%M:%S.%fZ") + "\n")
+							fileWrite.close()
 							if initOnly == True: # Blockchain with only the inital file, add the block to the second position in the file.
 								fileWrite = open(filePath, 'ab') #APPEND to bc file, must use 'ab'
 								secondst = BC_STATS(str.encode(""), datetime.timestamp(currTime), caseBytes, int(itemIDs[numitems]), str.encode("CHECKEDIN"), 0)
@@ -133,13 +140,35 @@ def arginit(argv):
 		if len(argv) > 2:
 			if argv[i] == "-i":
 				checkedOut = False;
+				itemID = argv[i+1]
+				caseID = 0
 				#Fetch caseID of block with matching itemID and block info
-				print("Case: ")
+				with open(logPath, 'r') as fileRead:
+					content = fileRead.readlines()
+					content = [x.strip() for x in content]
+					j = 0
+					while j < len(content):
+						if content[j] == itemID:
+							caseID = content[j-1]
+							if content[j+1] == "CHECKEDOUT":
+								checkedOut = True
+							elif content[j+1] == "CHECKEDIN":
+								checkedOut = False
+						j = j+1
 				
 				if checkedOut == False:
-					print("Checked out item: " + argv[i+1])
-					print(" Status: ")
-					print(" Time of action: ")
+					print("Case: " + caseID)
+					print("Checked out item: " + itemID)
+					print("\tStatus: CHECKEDOUT")
+					currTime = datetime.utcnow()
+					print("\tTime of action: " + currTime.strftime("%Y-%m-%dT%H:%M:%S.%fZ"))
+					fileWrite = open(logPath, 'a') # Add action to logfile.
+					fileWrite.write(caseID + "\n")
+					fileWrite.write(itemID + "\n")
+					fileWrite.write("CHECKEDOUT" + "\n")
+					fileWrite.write(currTime.strftime("%Y-%m-%dT%H:%M:%S.%fZ") + "\n")
+					fileWrite.close()
+					
 				else:
 					print("Error: Cannot check out a checked out item. Must check in first.")
 					exit(1)
@@ -150,51 +179,390 @@ def arginit(argv):
 		
 	elif argv[1] == "checkin":
 		if len(argv) > 2:
-			if argv[i] == "-i":
-				#Fetch caseID of block with matching itemID and block info
-				print("Case: ")
-				print("Checked in item: " + argv[i+1])
-				print(" Status: ")
-				print(" Time of action: ")
-			else:
-				exit(1)
+			checkedIn = False;
+			itemID = argv[i+1]
+			caseID = 0
+			#Fetch caseID of block with matching itemID and block info
+			with open(logPath, 'r') as fileRead:
+				content = fileRead.readlines()
+				content = [x.strip() for x in content]
+				j=0
+				while j < len(content):
+					if content[j] == itemID:
+						caseID = content[j-1]
+						if content[j+1] == "CHECKEDIN":
+							checkedIn = True
+						elif content[j+1] == "CHECKEDOUT":
+							checkedIn = False
+					j = j+1
+				
+				if checkedIn == False:
+					print("Case: " + caseID)
+					print("Checked in item: " + itemID)
+					print("\tStatus: CHECKEDIN")
+					currTime = datetime.utcnow()
+					print("\tTime of action: " + currTime.strftime("%Y-%m-%dT%H:%M:%S.%fZ"))
+					fileWrite = open(logPath, 'a') # Add action to logfile.
+					fileWrite.write(caseID + "\n")
+					fileWrite.write(itemID + "\n")
+					fileWrite.write("CHECKEDIN" + "\n")
+					fileWrite.write(currTime.strftime("%Y-%m-%dT%H:%M:%S.%fZ") + "\n")
+					fileWrite.close()
+				else:
+					print("Error: Cannot check in a checked in item.")
+					exit(1)
 		else:
 			exit(1)
 			
 	elif argv[1] == "log":
+		reverse = False
+		case = False
+		caseID = 0
+		item = False
+		itemID = 0
+		number = False
+		num_entries = 0
+		logPrint = []
 		if len(argv) > 2:
-			if argv[i] == "-r" or argv[i] == "--reverse": # Reverse order of log entries printed
-				#Fetch caseID of block with matching itemID and block info
-				print("Case: ")
-				print("Checked in item: ")
-				print(" Status: ")
-				print(" Time of action: ")
-			#elif argv[i] == "-n": Set number of log entries
-			
-			#elif argv[i] == "-i": # Find log entries with matched itemID
-			
-			#elif argv[i] == "-c": # Find log entries with matched caseID
-			
-			#else: # Print all contents of the log.
+			i = 2
+			increase = 0
+			while i < len(argv):
+				#print(argv[i])
+				#print(i)
+				if argv[i] == "-r" or argv[i] == "--reverse":
+					reverse = True
+					i = i+1
+					continue
+				if argv[i] == "-c":
+					case = True
+					caseID = argv[i+1]
+					i = i+2
+					continue
+				if argv[i] == "-i":
+					item = True
+					itemID = argv[i+1]
+					i = i+2
+					continue
+				if argv[i] == "-n":
+					number = True
+					num_entries = int(argv[i+1])*4
+					if (num_entries < 0):
+						num_entries = 999
+					i = i+2
+					continue
+			#print(reverse)
+			#print(case)
+			#print(item)
+			#print(number)
+		elif len(argv) == 2: # Print entire log
+			with open(logPath, 'r') as fileRead:
+				content = fileRead.readlines()
+				content = [x.strip() for x in content]
+				i = 0
+				while i < len(content):
+					print("Case: " + content[i])
+					print("Item: " + content[i+1])
+					print("Action: " + content[i+2])
+					print("Time: " + content[i+3])
+					print("")
+					i = i+4
+			exit(0)
+		if reverse == True:
+			if case == True:
+				with open(logPath, 'r') as fileRead:
+					content = fileRead.readlines()
+					content = [x.strip() for x in content]	
+				i = len(content)-4
+				while i >= 0: # Build an array of all log entries with matching caseID in reverse order
+					if content[i] == caseID:
+						logPrint.append(content[i])
+						logPrint.append(content[i+1])
+						logPrint.append(content[i+2])
+						logPrint.append(content[i+3])
+					i = i-4
+				if item == True:
+					if number == True:
+						i = 1
+						while i < len(logPrint) and (i-1) < num_entries:
+							if logPrint[i] == itemID:
+								print("Case: " + logPrint[i-1])
+								print("Item: " + logPrint[i])
+								print("Action: " + logPrint[i-1])
+								print("Time: " + logPrint[i+2])
+								print("")
+							i = i+4
+						exit(0)
+					else:
+						i = 1
+						while i < len(logPrint):
+							if logPrint[i] == itemID:
+								print("Case: " + logPrint[i-1])
+								print("Item: " + logPrint[i])
+								print("Action: " + logPrint[i-1])
+								print("Time: " + logPrint[i+2])
+								print("")
+								i = i+4
+						exit(0)
+				elif number == True:
+					i = 1
+					while i < len(logPrint) and (i-1) < num_entries:
+						print("Case: " + logPrint[i-1])
+						print("Item: " + logPrint[i])
+						print("Action: " + logPrint[i-1])
+						print("Time: " + logPrint[i+2])
+						print("")
+						i = i+4
+					exit(0)
+				else:
+					i = 1
+					while i < len(logPrint):
+						print("Case: " + logPrint[i-1])
+						print("Item: " + logPrint[i])
+						print("Action: " + logPrint[i-1])
+						print("Time: " + logPrint[i+2])
+						print("")
+						i = i+4
+					exit(0)
+					
+			elif item == True:
+				with open(logPath, 'r') as fileRead:
+					content = fileRead.readlines()
+					content = [x.strip() for x in content]	
+				i = len(content)-3
+				while i > 0: # Build an array of all log entries with matching itemID in reverse order
+					if content[i] == itemID:
+						logPrint.append(content[i-1])
+						logPrint.append(content[i])
+						logPrint.append(content[i+1])
+						logPrint.append(content[i+2])
+					i = i-4
+				if number == True:
+					i = 1
+					while i < len(logPrint) and (i-1) < num_entries:
+						print("Case: " + logPrint[i-1])
+						print("Item: " + logPrint[i])
+						print("Action: " + logPrint[i+1])
+						print("Time: " + logPrint[i+2])
+						print("")
+						i = i+4
+					exit(0)
+				else:
+					i = 1
+					while i < len(logPrint):
+						print("Case: " + logPrint[i-1])
+						print("Item: " + logPrint[i])
+						print("Action: " + logPrint[i+1])
+						print("Time: " + logPrint[i+2])
+						print("")
+						i = i+4
+					exit(0)
+				
+			elif number == True:
+				with open(logPath, 'r') as fileRead:
+					content = fileRead.readlines()
+					content = [x.strip() for x in content]	
+				i = len(content)-4
+				while i >= 0: # Build an array of all log entries in reverse order
+					logPrint.append(content[i])
+					logPrint.append(content[i+1])
+					logPrint.append(content[i+2])
+					logPrint.append(content[i+3])
+					i = i-4
+				i = 1
+				while i < len(logPrint) and (i-1) < num_entries:
+					print("Case: " + logPrint[i-1])
+					print("Item: " + logPrint[i])
+					print("Action: " + logPrint[i+1])
+					print("Time: " + logPrint[i+2])
+					print("")
+					i = i+4
+				exit(0)
+			else:
+				with open(logPath, 'r') as fileRead:
+					content = fileRead.readlines()
+					content = [x.strip() for x in content]	
+				i = len(content)-4
+				while i >= 0: # Build an array of all log entries in reverse order
+					logPrint.append(content[i])
+					logPrint.append(content[i+1])
+					logPrint.append(content[i+2])
+					logPrint.append(content[i+3])
+					i = i-4
+				i = 1
+				while i < len(logPrint):
+					print("Case: " + logPrint[i-1])
+					print("Item: " + logPrint[i])
+					print("Action: " + logPrint[i+1])
+					print("Time: " + logPrint[i+2])
+					print("")
+					i = i+4
+				exit(0)
+		#NON-REVERSE ORDERING
 		else:
-			exit(1)
+			if case == True:
+				with open(logPath, 'r') as fileRead:
+					content = fileRead.readlines()
+					content = [x.strip() for x in content]	
+					i = 0
+					while i < len(content): # Build an array of all log entries with matching caseID
+						if content[i] == caseID:
+							logPrint.append(content[i])
+							logPrint.append(content[i+1])
+							logPrint.append(content[i+2])
+							logPrint.append(content[i+3])
+						i = i+4
+				if item == True:
+					if number == True:
+						i = 1
+						while i < len(logPrint) and (i-1) < num_entries:
+							if logPrint[i] == itemID:
+								print("Case: " + logPrint[i-1])
+								print("Item: " + logPrint[i])
+								print("Action: " + logPrint[i+1])
+								print("Time: " + logPrint[i+2])
+								print("")
+							i = i+4
+						exit(0)
+					else:
+						i = 1
+						while i < len(logPrint):
+							if logPrint[i] == itemID:
+								print("Case: " + logPrint[i-1])
+								print("Item: " + logPrint[i])
+								print("Action: " + logPrint[i+1])
+								print("Time: " + logPrint[i+2])
+								print("")
+							i = i+4
+						exit(0)
+				elif number ==True:
+					i = 1
+					while i < len(logPrint) and (i-1) < num_entries:
+						print("Case: " + logPrint[i-1])
+						print("Item: " + logPrint[i])
+						print("Action: " + logPrint[i+1])
+						print("Time: " + logPrint[i+2])
+						print("")
+						i = i+4
+					exit(0)
+				else:
+					i = 1
+					while i < len(logPrint):
+						print("Case: " + logPrint[i-1])
+						print("Item: " + logPrint[i])
+						print("Action: " + logPrint[i+1])
+						print("Time: " + logPrint[i+2])
+						print("")
+						i = i+4
+					exit(0)
+					
+			elif item == True:
+				with open(logPath, 'r') as fileRead:
+					content = fileRead.readlines()
+					content = [x.strip() for x in content]	
+					i = 1
+					while i < len(content): # Build an array of all log entries with matching itemID
+						if content[i] == itemID:
+							logPrint.append(content[i-1])
+							logPrint.append(content[i])
+							logPrint.append(content[i+1])
+							logPrint.append(content[i+2])
+						i = i+4
+				if number == True:
+					i = 1
+					while i < len(logPrint) and (i-1) < num_entries:
+						print("Case: " + logPrint[i-1])
+						print("Item: " + logPrint[i])
+						print("Action: " + logPrint[i+1])
+						print("Time: " + logPrint[i+2])
+						print("")
+						i = i+4
+					exit(0)
+				else:
+					i = 1
+					while i < len(logPrint):
+						print("Case: " + logPrint[i-1])
+						print("Item: " + logPrint[i])
+						print("Action: " + logPrint[i+1])
+						print("Time: " + logPrint[i+2])
+						print("")
+						i = i+4
+					exit(0)
+				
+			elif number == True:
+				with open(logPath, 'r') as fileRead:
+					content = fileRead.readlines()
+					content = [x.strip() for x in content]	
+					i = 0
+					while i < len(content): # Build an array of all log entries
+						logPrint.append(content[i])
+						logPrint.append(content[i+1])
+						logPrint.append(content[i+2])
+						logPrint.append(content[i+3])
+						i = i+4
+					i = 1
+					while i < len(logPrint) and (i-1) < num_entries:
+						print("Case: " + logPrint[i-1])
+						print("Item: " + logPrint[i])
+						print("Action: " + logPrint[i+1])
+						print("Time: " + logPrint[i+2])
+						print("")
+						i = i+4
+					exit(0)
+			else:
+				print("Unknown error")
+				exit(1)
 			
 	elif argv[1] == "remove":
 		if len(argv) > 2:
 			if argv[i] == "-i":
 				caseID = 0 # set to blockchain node with matching itemID
+				itemFound = False
+				itemID = argv[i+1]
 				i = i+2
+				with open(logPath, 'r') as fileRead:
+					content = fileRead.readlines()
+					content = [x.strip() for x in content]
+					j = 0
+					while j < len(content):
+						if content[j] == itemID:
+							caseID = content[j-1]
+							itemFound = True
+						j = j+1
+				
 				if argv[i] == "-y" or argv[i] == "--why" :
-					print("Case: ")
-					print("Removed item:" + argv[i-1])
-					print(" Status: ")
+					reason = argv[i+1]
 					i = i+2
-					if i < len(argv):
+					if (reason == "DISPOSED" or reason == "DESTROYED") and i >= len(argv): # Valid reasons without an owner.
+						print("Case: " + caseID)
+						print("Removed item:" +  itemID)
+						print("\tStatus: " + reason)
+						currTime = datetime.utcnow()
+						print("\tTime of action: " + currTime.strftime("%Y-%m-%dT%H:%M:%S.%fZ"))
+						fileWrite = open(logPath, 'a') # Add action to logfile.
+						fileWrite.write(caseID + "\n")
+						fileWrite.write(itemID + "\n")
+						fileWrite.write(reason + "\n")
+						fileWrite.write(currTime.strftime("%Y-%m-%dT%H:%M:%S.%fZ") + "\n")
+						fileWrite.close()
+					elif i < len(argv) and (reason == "DISPOSED" or reason == "DESTROYED" or reason == "RELEASED"):
 						if argv[i] == "-o":
-							print(" Owner info: " + argv[i+1])
-							print(" Time of action: ")
+							print("Case: " + caseID)
+							print("Removed item:" +  itemID)
+							print("\tStatus: " + reason)
+							currTime = datetime.utcnow()
+							print("\tOwner info: " + argv[i+1])
+							print("\tTime of action: " + currTime.strftime("%Y-%m-%dT%H:%M:%S.%fZ"))
+							fileWrite = open(logPath, 'a') # Add action to logfile.
+							fileWrite.write(caseID + "\n")
+							fileWrite.write(itemID + "\n")
+							fileWrite.write(reason + "\n")
+							fileWrite.write(currTime.strftime("%Y-%m-%dT%H:%M:%S.%fZ") + "\n")
+							fileWrite.close()
 						else:
 							exit(1)
+					else:
+						print("Invalid reason to remove a chain. Action aborted.")
+						exit(1)
 				else:
 					sys.exit(1)
 					
@@ -204,6 +572,9 @@ def arginit(argv):
 			exit(1)	
 			
 	elif argv[1] == "init":
+		fileWrite = open(logPath, 'w') # Temporarily reset the logfile when init is called.
+		fileWrite.write("")
+		fileWrite.close()
 		if i < len(argv): # No arguments allowed after "init"
 			print("Too many parameters for init")
 			exit(1)
