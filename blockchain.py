@@ -76,6 +76,16 @@ def arginit(argv):
 								fileWrite.write(inits)
 								fileWrite.write(initd)
 								fileWrite.close()
+								fileWrite = open(logPath, 'w') # Add action to logfile.
+								caseID = "00000000-0000-0000-0000-000000000000"
+								itemID = "0"
+								reason = "INITIAL"
+								currTime = datetime.utcnow()
+								fileWrite.write(caseID + "\n")
+								fileWrite.write(itemID + "\n")
+								fileWrite.write(reason + "\n")
+								fileWrite.write(currTime.strftime("%Y-%m-%dT%H:%M:%S.%fZ") + "\n")
+								fileWrite.close()
 								print("Blockchain file not found. Created INITIAL block.")
 								exit(0)
 								
@@ -141,7 +151,7 @@ def arginit(argv):
 			if argv[i] == "-i":
 				checkedOut = False;
 				itemID = argv[i+1]
-				caseID = 0
+				caseID = "0"
 				#Fetch caseID of block with matching itemID and block info
 				with open(logPath, 'r') as fileRead:
 					content = fileRead.readlines()
@@ -181,7 +191,7 @@ def arginit(argv):
 		if len(argv) > 2:
 			checkedIn = False;
 			itemID = argv[i+1]
-			caseID = 0
+			caseID = "0"
 			#Fetch caseID of block with matching itemID and block info
 			with open(logPath, 'r') as fileRead:
 				content = fileRead.readlines()
@@ -590,6 +600,16 @@ def arginit(argv):
 			fileWrite.write(inits)
 			fileWrite.write(initd)
 			fileWrite.close()
+			fileWrite = open(logPath, 'w') # Add action to logfile.
+			caseID = "00000000-0000-0000-0000-000000000000"
+			itemID = "0"
+			reason = "INITIAL"
+			currTime = datetime.utcnow()
+			fileWrite.write(caseID + "\n")
+			fileWrite.write(itemID + "\n")
+			fileWrite.write(reason + "\n")
+			fileWrite.write(currTime.strftime("%Y-%m-%dT%H:%M:%S.%fZ") + "\n")
+			fileWrite.close()
 			print("Blockchain file not found. Created INITIAL block.")
 			exit(0)
 		else:
@@ -604,6 +624,16 @@ def arginit(argv):
 				initd = block_datainit_layout.pack(*initd)
 				fileWrite.write(inits)
 				fileWrite.write(initd)
+				fileWrite.close()
+				fileWrite = open(logPath, 'w') # Add action to logfile.
+				caseID = "00000000-0000-0000-0000-000000000000"
+				itemID = "0"
+				reason = "INITIAL"
+				currTime = datetime.utcnow()
+				fileWrite.write(caseID + "\n")
+				fileWrite.write(itemID + "\n")
+				fileWrite.write(reason + "\n")
+				fileWrite.write(currTime.strftime("%Y-%m-%dT%H:%M:%S.%fZ") + "\n")
 				fileWrite.close()
 				print("Invalid INITIAL block, Created new INITIAL block.")
 				exit(1)
@@ -623,6 +653,16 @@ def arginit(argv):
 					fileWrite.write(inits)
 					fileWrite.write(initd)
 					fileWrite.close()
+					fileWrite = open(logPath, 'w') # Add action to logfile.
+					caseID = "00000000-0000-0000-0000-000000000000"
+					itemID = "0"
+					reason = "INITIAL"
+					currTime = datetime.utcnow()
+					fileWrite.write(caseID + "\n")
+					fileWrite.write(itemID + "\n")
+					fileWrite.write(reason + "\n")
+					fileWrite.write(currTime.strftime("%Y-%m-%dT%H:%M:%S.%fZ") + "\n")
+					fileWrite.close()
 					print("Invalid INITIAL block, Created new INITIAL block.")
 					exit(1)	
 				else: # File with correct INITIAL block exists, no action required.
@@ -632,11 +672,12 @@ def arginit(argv):
 			
 	elif argv[1] == "verify":
 		numNodes = 0 # Check blockchain file and find number of Nodes.
-		status = "CLEAN" # Check blockchain to see if it has a parent, if two blocks have the same parent, if the contents do not match block checksum, or if an item was checked out or checked in after the chain was removed.
+		status = "ERROR" # Check blockchain to see if it has a parent, if two blocks have the same parent, if the contents do not match block checksum, or if an item was checked out or checked in after the chain was removed.
 		print("Transactions in blockchain: " + str(numNodes))
 		print("State of blockchain: " + status)
 		if status == "ERROR":
 			print("Bad block: ")
+			exit(1)
 
 def main():
     arginit(sys.argv)
