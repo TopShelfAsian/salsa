@@ -18,7 +18,7 @@ bc_checkout = collections.namedtuple('bc_checkout', ['ID', 'Status']) # Layout f
 
 	
 def arginit(argv):
-	#Set BCHOC environment variable (local file bchocout for blockchain or file path defined by gradescope)
+#Set BCHOC environment variable (local file bchocout for blockchain or file path defined by gradescope)
 	key = 'BCHOC_FILE_PATH'
 	if key in os.environ:
 		filePath = os.environ[key]
@@ -26,14 +26,14 @@ def arginit(argv):
 		filePath = "bchocout"
 	logPath = "logfile.txt"
 	i = 2
-	itemIDs = []
+	itemIDs = [] #array to track the evidence ID's, makes checking easier
 	if (len(argv) == 1): # No arugments to the program, abort
 		exit(3)
 	if argv[1] == "add":
 		blockStat = [] # Array storing the blocks read from the blockchain
 		if len(argv) > 2:
 			if argv[i] == "-c": # Case ID
-				caseID = argv[i+1]
+				caseID = argv[i+1] #saves Case ID
 				i = i+2
 				numitems = -1
 				if i >= len(argv):
@@ -88,8 +88,6 @@ def arginit(argv):
 								fileWrite.close()
 								print("Blockchain file not found. Created INITIAL block.")
 								exit(0)
-								
-						
 						#If the evidence item doesn't exist, peform the hash of the last item in the chain and append to the file
 						if itemFound == False:
 							if caseID[8] != "-": # Standardize caseID format for prining and remove dashes for storage in the blockchain
@@ -151,75 +149,221 @@ def arginit(argv):
 			if argv[i] == "-i":
 				checkedOut = False;
 				itemID = argv[i+1]
+				i = 0
 				caseID = "0"
+				blockStat = []
+				try:
+					with open(filePath, 'rb') as fileRead:
+						initOnly = True # Blockchain only contains an init block.
+						numblocks = -1
+						bcstatsinit = fileRead.read(block_layout.size) # Read inital block first 6 values
+						#bcstatsinit = BC_STATS._make(block_layout.unpack(bcstatsinit))
+						bcdatainit = fileRead.read(block_datainit_layout.size) # Read inital block data
+						#bcdatainit = BC_DATA._make(block_datainit_layout.unpack(bcdatainit))
+						while True: # Read all blocks in the blockchain to see if the evidenceID already exists in the chain.
+							bcstats = fileRead.read(block_layout.size)
+							if not bcstats: # if at the end of the file, bcstats is overwritten, so change value back to the last block stats
+								if numblocks != -1: # If there is more than the inital block in the chain, set bcstats to the previous block values to calculate the previous hash.
+									bcstats = blockStat[numblocks]
+								fileRead.close()
+								break
+							numblocks = numblocks+1
+							initOnly = False
+							bcstatsm = BC_STATS._make(block_layout.unpack(bcstats))
+							blockStat.append(bcstats)
+							evidence = bcstatsm.Evidence_Item_ID
+				except FileNotFoundError as e: # Adding to a file that doesn't exist, create the initial block.
+						fileWrite = open(filePath, 'wb')
+						inits = BC_STATS(str.encode(""), 0, str.encode(""), 0, str.encode("INITIAL"), 14)
+						initd = BC_DATA(str.encode("Initial block"))
+						inits = block_layout.pack(*inits)
+						initd = block_datainit_layout.pack(*initd)
+						fileWrite.write(inits)
+						fileWrite.write(initd)
+						fileWrite.close()
+						fileWrite = open(logPath, 'w') # Add action to logfile.
+						caseID = "00000000-0000-0000-0000-000000000000"
+						itemID = "0"
+						reason = "INITIAL"
+						currTime = datetime.utcnow()
+						fileWrite.write(caseID + "\n")
+						fileWrite.write(itemID + "\n")
+						fileWrite.write(reason + "\n")
+						fileWrite.write(currTime.strftime("%Y-%m-%dT%H:%M:%S.%fZ") + "\n")
+						fileWrite.close()
+						print("Blockchain file not found. Created INITIAL block.")
+						exit(0)
 				#Fetch caseID of block with matching itemID and block info
 				with open(logPath, 'r') as fileRead:
+					itemFound = False
+					invalid = False
 					content = fileRead.readlines()
 					content = [x.strip() for x in content]
 					j = 0
 					while j < len(content):
 						if content[j] == itemID:
+							itemFound = True
 							caseID = content[j-1]
+							if caseID[8] != "-": # Standardize caseID format for prining and remove dashes for storage in the blockchain
+								newcaseID = caseID[:8]+'-'+caseID[8:12]+'-'+caseID[12:16]+'-'+caseID[16:20]+'-'+caseID[20:]
+								print("Case: " + newcaseID)
+								caseBytes = bytearray.fromhex(caseID) 
+								caseBytes.reverse()
+							else:
+								newcaseID = caseID
+								caseID = caseID.replace('-', '')
+								caseBytes = bytearray.fromhex(caseID)
+								caseBytes.reverse()
 							if content[j+1] == "CHECKEDOUT":
 								checkedOut = True
 							elif content[j+1] == "CHECKEDIN":
 								checkedOut = False
+							elif content[j+1] == "DISPOSED" or content[j+1] == "DESTROYED" or content[j+1] == "RELEASED":
+								invalid = True
 						j = j+1
-				
-				if checkedOut == False:
-					print("Case: " + caseID)
-					print("Checked out item: " + itemID)
-					print("\tStatus: CHECKEDOUT")
-					currTime = datetime.utcnow()
-					print("\tTime of action: " + currTime.strftime("%Y-%m-%dT%H:%M:%S.%fZ"))
-					fileWrite = open(logPath, 'a') # Add action to logfile.
-					fileWrite.write(caseID + "\n")
-					fileWrite.write(itemID + "\n")
-					fileWrite.write("CHECKEDOUT" + "\n")
-					fileWrite.write(currTime.strftime("%Y-%m-%dT%H:%M:%S.%fZ") + "\n")
-					fileWrite.close()
-					
+				if invalid == False:
+					if itemFound == True:
+						if checkedOut == False:
+							print("Case: " + newcaseID)
+							print("Checked out item: " + itemID)
+							print("\tStatus: CHECKEDOUT")
+							currTime = datetime.utcnow()
+							print("\tTime of action: " + currTime.strftime("%Y-%m-%dT%H:%M:%S.%fZ"))
+							fileWrite = open(logPath, 'a') # Add action to logfile.
+							fileWrite.write(newcaseID + "\n")
+							fileWrite.write(itemID + "\n")
+							fileWrite.write("CHECKEDOUT" + "\n")
+							fileWrite.write(currTime.strftime("%Y-%m-%dT%H:%M:%S.%fZ") + "\n")
+							fileWrite.close()
+							#adding to blockchain file.
+							block256 = hashlib.sha256()
+							block256.update(bcstats)
+							fileWrite = open(filePath, 'ab') #APPEND to bc file, must use 'ab'
+							blockst = BC_STATS(str.encode(block256.hexdigest()), datetime.timestamp(currTime), caseBytes, int(itemID), str.encode("CHECKEDOUT"), 0)
+							blockst = block_layout.pack(*blockst)
+							fileWrite.write(blockst)
+							fileWrite.close()	
+						else:
+							print("Error: Cannot check out a checked out item. Must check in first.")
+							exit(1)
+					else:
+						print("Error: Cannot check out an item that has not been added. Must add it in first.")
+						exit(1)
 				else:
-					print("Error: Cannot check out a checked out item. Must check in first.")
+					print("Error: Invalid status on block, therefore cannot check out.")
 					exit(1)
 			else:
+				print("Checkout_test1")
 				exit(1)
 		else:
+			print("Checkout_test2")
 			exit(1)
 		
 	elif argv[1] == "checkin":
 		if len(argv) > 2:
-			checkedIn = False;
+			checkedIn = False
 			itemID = argv[i+1]
 			caseID = "0"
+			blockStat = []
+			try:
+				with open(filePath, 'rb') as fileRead:
+					initOnly = True # Blockchain only contains an init block.
+					numblocks = -1
+					bcstatsinit = fileRead.read(block_layout.size) # Read inital block first 6 values
+					#bcstatsinit = BC_STATS._make(block_layout.unpack(bcstatsinit))
+					bcdatainit = fileRead.read(block_datainit_layout.size) # Read inital block data
+					#bcdatainit = BC_DATA._make(block_datainit_layout.unpack(bcdatainit))
+					while True: # Read all blocks in the blockchain to see if the evidenceID already exists in the chain.
+						bcstats = fileRead.read(block_layout.size)
+						if not bcstats: # if at the end of the file, bcstats is overwritten, so change value back to the last block stats
+							if numblocks != -1: # If there is more than the inital block in the chain, set bcstats to the previous block values to calculate the previous hash.
+								bcstats = blockStat[numblocks]
+							fileRead.close()
+							break
+						numblocks = numblocks+1
+						initOnly = False
+						bcstatsm = BC_STATS._make(block_layout.unpack(bcstats))
+						blockStat.append(bcstats)
+						evidence = bcstatsm.Evidence_Item_ID
+			except FileNotFoundError as e: # Adding to a file that doesn't exist, create the initial block.
+					fileWrite = open(filePath, 'wb')
+					inits = BC_STATS(str.encode(""), 0, str.encode(""), 0, str.encode("INITIAL"), 14)
+					initd = BC_DATA(str.encode("Initial block"))
+					inits = block_layout.pack(*inits)
+					initd = block_datainit_layout.pack(*initd)
+					fileWrite.write(inits)
+					fileWrite.write(initd)
+					fileWrite.close()
+					fileWrite = open(logPath, 'w') # Add action to logfile.
+					caseID = "00000000-0000-0000-0000-000000000000"
+					itemID = "0"
+					reason = "INITIAL"
+					currTime = datetime.utcnow()
+					fileWrite.write(caseID + "\n")
+					fileWrite.write(itemID + "\n")
+					fileWrite.write(reason + "\n")
+					fileWrite.write(currTime.strftime("%Y-%m-%dT%H:%M:%S.%fZ") + "\n")
+					fileWrite.close()
+					print("Blockchain file not found. Created INITIAL block.")
+					exit(0)
 			#Fetch caseID of block with matching itemID and block info
 			with open(logPath, 'r') as fileRead:
+				itemFound = False
+				invalid = False
 				content = fileRead.readlines()
 				content = [x.strip() for x in content]
 				j=0
 				while j < len(content):
 					if content[j] == itemID:
+						itemFound = True
 						caseID = content[j-1]
+						if caseID[8] != "-": # Standardize caseID format for prining and remove dashes for storage in the blockchain
+							newcaseID = caseID[:8]+'-'+caseID[8:12]+'-'+caseID[12:16]+'-'+caseID[16:20]+'-'+caseID[20:]
+							print("Case: " + newcaseID)
+							caseBytes = bytearray.fromhex(caseID) 
+							caseBytes.reverse()
+						else:
+							newcaseID = caseID
+							caseID = caseID.replace('-', '')
+							caseBytes = bytearray.fromhex(caseID)
+							caseBytes.reverse()
 						if content[j+1] == "CHECKEDIN":
 							checkedIn = True
 						elif content[j+1] == "CHECKEDOUT":
 							checkedIn = False
+						elif content[j+1] == "DISPOSED" or content[j+1] == "DESTROYED" or content[j+1] == "RELEASED":
+							invalid = True
 					j = j+1
-				
-				if checkedIn == False:
-					print("Case: " + caseID)
-					print("Checked in item: " + itemID)
-					print("\tStatus: CHECKEDIN")
-					currTime = datetime.utcnow()
-					print("\tTime of action: " + currTime.strftime("%Y-%m-%dT%H:%M:%S.%fZ"))
-					fileWrite = open(logPath, 'a') # Add action to logfile.
-					fileWrite.write(caseID + "\n")
-					fileWrite.write(itemID + "\n")
-					fileWrite.write("CHECKEDIN" + "\n")
-					fileWrite.write(currTime.strftime("%Y-%m-%dT%H:%M:%S.%fZ") + "\n")
-					fileWrite.close()
+				if invalid == False:
+					if itemFound == True:
+						if checkedIn == False:
+							print("Case: " + caseID)
+							print("Checked in item: " + itemID)
+							print("\tStatus: CHECKEDIN")
+							currTime = datetime.utcnow()
+							print("\tTime of action: " + currTime.strftime("%Y-%m-%dT%H:%M:%S.%fZ"))
+							fileWrite = open(logPath, 'a') # Add action to logfile.
+							fileWrite.write(newcaseID + "\n")
+							fileWrite.write(itemID + "\n")
+							fileWrite.write("CHECKEDIN" + "\n")
+							fileWrite.write(currTime.strftime("%Y-%m-%dT%H:%M:%S.%fZ") + "\n")
+							fileWrite.close()
+							#adding to blockchain file
+							block256 = hashlib.sha256()
+							block256.update(bcstats)
+							fileWrite = open(filePath, 'ab') #APPEND to bc file, must use 'ab'
+							blockst = BC_STATS(str.encode(block256.hexdigest()), datetime.timestamp(currTime), caseBytes, int(itemID), str.encode("CHECKEDIN"), 0)
+							blockst = block_layout.pack(*blockst)
+							fileWrite.write(blockst)
+							fileWrite.close()	
+						else:
+							print("Error: Cannot check in a checked in item.")
+							exit(1)
+					else:
+						print("Error: Cannot check in an item that has not been added. Must add it in first.")
+						exit(1)
 				else:
-					print("Error: Cannot check in a checked in item.")
+					print("Error: Invalid status on block, therefore cannot check out.")
 					exit(1)
 		else:
 			exit(1)
