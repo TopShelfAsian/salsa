@@ -10,6 +10,7 @@ import time
 
 block_layout = struct.Struct(b'32s d 16s I 12s I') # Layout of first six block values
 block_datainit_layout = struct.Struct(b'14s ') # Layout of block data for the inital block
+#block_dataremove_layout = struct.Struct(b'78s ') #added in after push
 block_data_layout = struct.Struct('0s ') # Layout of block data for added blocks
 BC_STATS = collections.namedtuple('BC_STATS', ['Previous_Hash', 'Timestamp', 'Case_ID', 'Evidence_Item_ID', 'State', 'Data_Length']) # Variables stored in first six block values
 BC_DATA = collections.namedtuple('BC_DATA', ['Data']) # Data variable for block
@@ -63,6 +64,10 @@ def arginit(argv):
 									numblocks = numblocks+1
 									initOnly = False
 									bcstatsm = BC_STATS._make(block_layout.unpack(bcstats))
+									#ADDED IN AFTER PUSH
+									#if bcstatsm.State == "DISPOSED" or bcstatsm.State == "DESTROYED" or bcstatsm.State == "RELEASED":
+									temp = fileRead.read(bcstatsm.Data_Length)
+									#END
 									blockStat.append(bcstats)
 									evidence = bcstatsm.Evidence_Item_ID
 									if str(evidence) == itemIDs[numitems]: #The evidenceID is found in the blockchain.
@@ -170,6 +175,10 @@ def arginit(argv):
 							numblocks = numblocks+1
 							initOnly = False
 							bcstatsm = BC_STATS._make(block_layout.unpack(bcstats))
+							#ADDED IN AFTER PUSH
+							#if bcstatsm.State == "DISPOSED" or bcstatsm.State == "DESTROYED" or bcstatsm.State == "RELEASED":
+							temp = fileRead.read(bcstatsm.Data_Length)
+							#END
 							blockStat.append(bcstats)
 							evidence = bcstatsm.Evidence_Item_ID
 				except FileNotFoundError as e: # Adding to a file that doesn't exist, create the initial block.
@@ -275,6 +284,7 @@ def arginit(argv):
 					#bcdatainit = BC_DATA._make(block_datainit_layout.unpack(bcdatainit))
 					while True: # Read all blocks in the blockchain to see if the evidenceID already exists in the chain.
 						bcstats = fileRead.read(block_layout.size)
+						print(bcstats)
 						if not bcstats: # if at the end of the file, bcstats is overwritten, so change value back to the last block stats
 							if numblocks != -1: # If there is more than the inital block in the chain, set bcstats to the previous block values to calculate the previous hash.
 								bcstats = blockStat[numblocks]
@@ -283,6 +293,10 @@ def arginit(argv):
 						numblocks = numblocks+1
 						initOnly = False
 						bcstatsm = BC_STATS._make(block_layout.unpack(bcstats))
+						#ADDED IN AFTER PUSH
+						#if bcstatsm.State == "DISPOSED" or bcstatsm.State == "DESTROYED" or bcstatsm.State == "RELEASED":
+						temp = fileRead.read(bcstatsm.Data_Length)
+						#END
 						blockStat.append(bcstats)
 						evidence = bcstatsm.Evidence_Item_ID
 			except FileNotFoundError as e: # Adding to a file that doesn't exist, create the initial block.
@@ -692,6 +706,7 @@ def arginit(argv):
 							numblocks = numblocks+1
 							initOnly = False
 							bcstatsm = BC_STATS._make(block_layout.unpack(bcstats))
+							temp = fileRead.read(bcstatsm.Data_Length)
 							blockStat.append(bcstats)
 							evidence = bcstatsm.Evidence_Item_ID
 				except FileNotFoundError as e: # Adding to a file that doesn't exist, create the initial block.
@@ -760,12 +775,16 @@ def arginit(argv):
 							blockst = block_layout.pack(*blockst)
 							fileWrite.write(blockst)
 							fileWrite.close()	
-						elif i < len(argv) and (reason == "DISPOSED" or reason == "DESTROYED" or reason == "RELEASED"):
+						elif i < len(argv) and ("RELEASED"): #added in after pushed
 							if argv[i] == "-o":
+								#added in after push
 								ownerInfo = argv[i+1]
-								ownerInfo_bytes = ownerInfo.encode()
+								Test = BC_DATA(str.encode(ownerInfo)+ b'\x00')
+								#ownerInfo_bytes = ownerInfo.encode()
 								#ownerInfo_bytes_final = ownerInfo_bytes + b'\x00'
-								print("Case: " + caseID)
+								#print(ownerInfo_bytes_final)
+								#end
+								print("Case: " + newcaseID)
 								print("Removed item:" +  itemID)
 								print("\tStatus: " + reason)
 								currTime = datetime.utcnow()
@@ -780,9 +799,17 @@ def arginit(argv):
 								block256 = hashlib.sha256()
 								block256.update(bcstats)
 								fileWrite = open(filePath, 'ab') #APPEND to bc file, must use 'ab'
-								blockst = BC_STATS(str.encode(block256.hexdigest()), datetime.timestamp(currTime), caseBytes, int(itemID), str.encode(reason), len(ownerInfo))
+								blockst = BC_STATS(str.encode(block256.hexdigest()), datetime.timestamp(currTime), caseBytes, int(itemID), str.encode(reason), len(ownerInfo)+1)
 								blockst = block_layout.pack(*blockst)
 								fileWrite.write(blockst)
+								#added in after pushed
+								#blockd = BC_DATA(ownerInfo_bytes_final)
+								data_length = len(ownerInfo)+1 
+								block_dataremove_layout = struct.Struct(str(data_length) + 's')
+								Test = block_dataremove_layout.pack(*Test)
+								print(repr(Test))
+								fileWrite.write(Test)
+								#end
 								fileWrite.close()	
 							else:
 								exit(1)
