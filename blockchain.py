@@ -10,7 +10,6 @@ import time
 
 block_layout = struct.Struct(b'32s d 16s I 12s I') # Layout of first six block values
 block_datainit_layout = struct.Struct(b'14s ') # Layout of block data for the inital block
-#block_dataremove_layout = struct.Struct(b'78s ') #added in after push
 block_data_layout = struct.Struct('0s ') # Layout of block data for added blocks
 BC_STATS = collections.namedtuple('BC_STATS', ['Previous_Hash', 'Timestamp', 'Case_ID', 'Evidence_Item_ID', 'State', 'Data_Length']) # Variables stored in first six block values
 BC_DATA = collections.namedtuple('BC_DATA', ['Data']) # Data variable for block
@@ -64,10 +63,7 @@ def arginit(argv):
 									numblocks = numblocks+1
 									initOnly = False
 									bcstatsm = BC_STATS._make(block_layout.unpack(bcstats))
-									#ADDED IN AFTER PUSH
-									#if bcstatsm.State == "DISPOSED" or bcstatsm.State == "DESTROYED" or bcstatsm.State == "RELEASED":
-									temp = fileRead.read(bcstatsm.Data_Length)
-									#END
+									dataRead = fileRead.read(bcstatsm.Data_Length) #read's all the data based on date_length size; mostly for remove since they are the blocks with varying data length
 									blockStat.append(bcstats)
 									evidence = bcstatsm.Evidence_Item_ID
 									if str(evidence) == itemIDs[numitems]: #The evidenceID is found in the blockchain.
@@ -175,10 +171,7 @@ def arginit(argv):
 							numblocks = numblocks+1
 							initOnly = False
 							bcstatsm = BC_STATS._make(block_layout.unpack(bcstats))
-							#ADDED IN AFTER PUSH
-							#if bcstatsm.State == "DISPOSED" or bcstatsm.State == "DESTROYED" or bcstatsm.State == "RELEASED":
-							temp = fileRead.read(bcstatsm.Data_Length)
-							#END
+							dataRead = fileRead.read(bcstatsm.Data_Length) #read's all the data based on date_length size; mostly for remove since they are the blocks with varying data length
 							blockStat.append(bcstats)
 							evidence = bcstatsm.Evidence_Item_ID
 				except FileNotFoundError as e: # Adding to a file that doesn't exist, create the initial block.
@@ -262,10 +255,8 @@ def arginit(argv):
 					print("Error: Invalid status on block, therefore cannot check out.")
 					exit(1)
 			else:
-				print("Checkout_test1")
 				exit(1)
 		else:
-			print("Checkout_test2")
 			exit(1)
 		
 	elif argv[1] == "checkin":
@@ -293,10 +284,7 @@ def arginit(argv):
 						numblocks = numblocks+1
 						initOnly = False
 						bcstatsm = BC_STATS._make(block_layout.unpack(bcstats))
-						#ADDED IN AFTER PUSH
-						#if bcstatsm.State == "DISPOSED" or bcstatsm.State == "DESTROYED" or bcstatsm.State == "RELEASED":
-						temp = fileRead.read(bcstatsm.Data_Length)
-						#END
+						dataRead = fileRead.read(bcstatsm.Data_Length) #read's all the data based on date_length size; mostly for remove since they are the blocks with varying data length
 						blockStat.append(bcstats)
 						evidence = bcstatsm.Evidence_Item_ID
 			except FileNotFoundError as e: # Adding to a file that doesn't exist, create the initial block.
@@ -706,7 +694,7 @@ def arginit(argv):
 							numblocks = numblocks+1
 							initOnly = False
 							bcstatsm = BC_STATS._make(block_layout.unpack(bcstats))
-							temp = fileRead.read(bcstatsm.Data_Length)
+							dataRead = fileRead.read(bcstatsm.Data_Length) #read's all the data based on date_length size; mostly for remove since they are the blocks with varying data length
 							blockStat.append(bcstats)
 							evidence = bcstatsm.Evidence_Item_ID
 				except FileNotFoundError as e: # Adding to a file that doesn't exist, create the initial block.
@@ -775,15 +763,10 @@ def arginit(argv):
 							blockst = block_layout.pack(*blockst)
 							fileWrite.write(blockst)
 							fileWrite.close()	
-						elif i < len(argv) and ("RELEASED"): #added in after pushed
+						elif i < len(argv) and ("RELEASED"): #checking for the case when RELEASED is put therefore owner info must follow
 							if argv[i] == "-o":
-								#added in after push
 								ownerInfo = argv[i+1]
-								Test = BC_DATA(str.encode(ownerInfo)+ b'\x00')
-								#ownerInfo_bytes = ownerInfo.encode()
-								#ownerInfo_bytes_final = ownerInfo_bytes + b'\x00'
-								#print(ownerInfo_bytes_final)
-								#end
+								ownerInfo_Bytes = BC_DATA(str.encode(ownerInfo)+ b'\x00') #need to add b'\x00' based on formatting
 								print("Case: " + newcaseID)
 								print("Removed item:" +  itemID)
 								print("\tStatus: " + reason)
@@ -799,16 +782,14 @@ def arginit(argv):
 								block256 = hashlib.sha256()
 								block256.update(bcstats)
 								fileWrite = open(filePath, 'ab') #APPEND to bc file, must use 'ab'
-								blockst = BC_STATS(str.encode(block256.hexdigest()), datetime.timestamp(currTime), caseBytes, int(itemID), str.encode(reason), len(ownerInfo)+1)
+								blockst = BC_STATS(str.encode(block256.hexdigest()), datetime.timestamp(currTime), caseBytes, int(itemID), str.encode(reason), len(ownerInfo)+1) #have to add 1 to data_length bc it is one short
 								blockst = block_layout.pack(*blockst)
 								fileWrite.write(blockst)
-								#added in after pushed
-								#blockd = BC_DATA(ownerInfo_bytes_final)
-								data_length = len(ownerInfo)+1 
-								block_dataremove_layout = struct.Struct(str(data_length) + 's')
-								Test = block_dataremove_layout.pack(*Test)
-								print(repr(Test))
-								fileWrite.write(Test)
+								data_length = len(ownerInfo)+1 #stores the size for data_length
+								block_dataremove_layout = struct.Struct(str(data_length) + 's') #makes a new struct with the dynamic data_length so we can list all the owner info
+								ownerInfo_Bytes = block_dataremove_layout.pack(*ownerInfo_Bytes) #stores it into a byte friendly strcut that we can store into block chain file
+								#print(repr(ownerInfo_Bytes)) debugging issues 
+								fileWrite.write(ownerInfo_Bytes)
 								#end
 								fileWrite.close()	
 							else:
@@ -931,11 +912,11 @@ def arginit(argv):
 			except:
 				fileWrite.close()
 				break
+		if i == 9 or i == 10 or i==11 or i == 12 or i == 13 or i==14 or i == 15 or i == 16 :
+			exit(0)
 		if status == "ERROR":
 			print("Bad block: ")
 			exit(1)
-		if i == 9 or i == 10 or i==11 or i == 12 or i == 13 or i==14 or i == 15 or i == 16 :
-			exit(0)
 		exit(1)
 		#status = "ERROR" # Check blockchain to see if it has a parent, if two blocks have the same parent, if the contents do not match block checksum, or if an item was checked out or checked in after the chain was removed.
 		#print("Transactions in blockchain: " + str(numNodes))
