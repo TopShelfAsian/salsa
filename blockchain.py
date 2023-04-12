@@ -900,6 +900,7 @@ def arginit(argv):
 		fileWrite = open(filePath, 'rb')
 		numNodes = 0 # Check blockchain file and find number of Nodes.
 		status = "ERROR"
+		duplicate = "duplicate"
 		i = 0
 		while True:
 			try:
@@ -914,7 +915,7 @@ def arginit(argv):
 				break
 		if i == 9 or i == 10 or i==11 or i == 12 or i == 13 or i==14 or i == 15 or i == 16 :
 			exit(0)
-		if status == "ERROR":
+		if status == "ERROR" or duplicate == "duplicate ":
 			print("Bad block: ")
 			exit(1)
 		exit(1)
