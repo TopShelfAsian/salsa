@@ -147,7 +147,7 @@ def arginit(argv):
 	elif argv[1] == "checkout":
 		if len(argv) > 2:
 			if argv[i] == "-i":
-				checkedOut = False;
+				checkedOut = False
 				itemID = argv[i+1]
 				i = 0
 				caseID = "0"
@@ -671,7 +671,50 @@ def arginit(argv):
 			if argv[i] == "-i":
 				caseID = 0 # set to blockchain node with matching itemID
 				itemFound = False
+				invalid = False
 				itemID = argv[i+1]
+				blockStat = []
+				try:
+					with open(filePath, 'rb') as fileRead:
+						initOnly = True # Blockchain only contains an init block.
+						numblocks = -1
+						bcstatsinit = fileRead.read(block_layout.size) # Read inital block first 6 values
+						#bcstatsinit = BC_STATS._make(block_layout.unpack(bcstatsinit))
+						bcdatainit = fileRead.read(block_datainit_layout.size) # Read inital block data
+						#bcdatainit = BC_DATA._make(block_datainit_layout.unpack(bcdatainit))
+						while True: # Read all blocks in the blockchain to see if the evidenceID already exists in the chain.
+							bcstats = fileRead.read(block_layout.size)
+							if not bcstats: # if at the end of the file, bcstats is overwritten, so change value back to the last block stats
+								if numblocks != -1: # If there is more than the inital block in the chain, set bcstats to the previous block values to calculate the previous hash.
+									bcstats = blockStat[numblocks]
+								fileRead.close()
+								break
+							numblocks = numblocks+1
+							initOnly = False
+							bcstatsm = BC_STATS._make(block_layout.unpack(bcstats))
+							blockStat.append(bcstats)
+							evidence = bcstatsm.Evidence_Item_ID
+				except FileNotFoundError as e: # Adding to a file that doesn't exist, create the initial block.
+						fileWrite = open(filePath, 'wb')
+						inits = BC_STATS(str.encode(""), 0, str.encode(""), 0, str.encode("INITIAL"), 14)
+						initd = BC_DATA(str.encode("Initial block"))
+						inits = block_layout.pack(*inits)
+						initd = block_datainit_layout.pack(*initd)
+						fileWrite.write(inits)
+						fileWrite.write(initd)
+						fileWrite.close()
+						fileWrite = open(logPath, 'w') # Add action to logfile.
+						caseID = "00000000-0000-0000-0000-000000000000"
+						itemID = "0"
+						reason = "INITIAL"
+						currTime = datetime.utcnow()
+						fileWrite.write(caseID + "\n")
+						fileWrite.write(itemID + "\n")
+						fileWrite.write(reason + "\n")
+						fileWrite.write(currTime.strftime("%Y-%m-%dT%H:%M:%S.%fZ") + "\n")
+						fileWrite.close()
+						print("Blockchain file not found. Created INITIAL block.")
+						exit(0)
 				i = i+2
 				with open(logPath, 'r') as fileRead:
 					content = fileRead.readlines()
@@ -680,46 +723,75 @@ def arginit(argv):
 					while j < len(content):
 						if content[j] == itemID:
 							caseID = content[j-1]
+							stateCheck = content[j+1]
 							itemFound = True
+							if caseID[8] != "-": # Standardize caseID format for prining and remove dashes for storage in the blockchain
+								newcaseID = caseID[:8]+'-'+caseID[8:12]+'-'+caseID[12:16]+'-'+caseID[16:20]+'-'+caseID[20:]
+								print("Case: " + newcaseID)
+								caseBytes = bytearray.fromhex(caseID) 
+								caseBytes.reverse()
+							else:
+								newcaseID = caseID
+								caseID = caseID.replace('-', '')
+								caseBytes = bytearray.fromhex(caseID)
+								caseBytes.reverse()
 						j = j+1
-				
-				if argv[i] == "-y" or argv[i] == "--why" :
-					reason = argv[i+1]
-					i = i+2
-					if (reason == "DISPOSED" or reason == "DESTROYED") and i >= len(argv): # Valid reasons without an owner.
-						print("Case: " + caseID)
-						print("Removed item:" +  itemID)
-						print("\tStatus: " + reason)
-						currTime = datetime.utcnow()
-						print("\tTime of action: " + currTime.strftime("%Y-%m-%dT%H:%M:%S.%fZ"))
-						fileWrite = open(logPath, 'a') # Add action to logfile.
-						fileWrite.write(caseID + "\n")
-						fileWrite.write(itemID + "\n")
-						fileWrite.write(reason + "\n")
-						fileWrite.write(currTime.strftime("%Y-%m-%dT%H:%M:%S.%fZ") + "\n")
-						fileWrite.close()
-					elif i < len(argv) and (reason == "DISPOSED" or reason == "DESTROYED" or reason == "RELEASED"):
-						if argv[i] == "-o":
-							print("Case: " + caseID)
+				if itemFound == True and stateCheck == "CHECKEDIN":
+					if argv[i] == "-y" or argv[i] == "--why" :
+						reason = argv[i+1]
+						info = 0
+						i = i+2
+						if (reason == "DISPOSED" or reason == "DESTROYED") and i >= len(argv): # Valid reasons without an owner.
+							print("Case: " + newcaseID)
 							print("Removed item:" +  itemID)
 							print("\tStatus: " + reason)
 							currTime = datetime.utcnow()
-							print("\tOwner info: " + argv[i+1])
 							print("\tTime of action: " + currTime.strftime("%Y-%m-%dT%H:%M:%S.%fZ"))
 							fileWrite = open(logPath, 'a') # Add action to logfile.
-							fileWrite.write(caseID + "\n")
+							fileWrite.write(newcaseID + "\n")
 							fileWrite.write(itemID + "\n")
 							fileWrite.write(reason + "\n")
 							fileWrite.write(currTime.strftime("%Y-%m-%dT%H:%M:%S.%fZ") + "\n")
 							fileWrite.close()
+							#adding to blockchain file.
+							block256 = hashlib.sha256()
+							block256.update(bcstats)
+							fileWrite = open(filePath, 'ab') #APPEND to bc file, must use 'ab'
+							blockst = BC_STATS(str.encode(block256.hexdigest()), datetime.timestamp(currTime), caseBytes, int(itemID), str.encode(reason), info)
+							blockst = block_layout.pack(*blockst)
+							fileWrite.write(blockst)
+							fileWrite.close()	
+						elif i < len(argv) and (reason == "DISPOSED" or reason == "DESTROYED" or reason == "RELEASED"):
+							if argv[i] == "-o":
+								print("Case: " + newcaseID)
+								print("Removed item:" +  itemID)
+								print("\tStatus: " + reason)
+								currTime = datetime.utcnow()
+								print("\tOwner info: " + argv[i+1])
+								print("\tTime of action: " + currTime.strftime("%Y-%m-%dT%H:%M:%S.%fZ"))
+								fileWrite = open(logPath, 'a') # Add action to logfile.
+								fileWrite.write(newcaseID + "\n")
+								fileWrite.write(itemID + "\n")
+								fileWrite.write(reason + "\n")
+								fileWrite.write(currTime.strftime("%Y-%m-%dT%H:%M:%S.%fZ") + "\n")
+								fileWrite.close()
+								block256 = hashlib.sha256()
+								block256.update(bcstats)
+								fileWrite = open(filePath, 'ab') #APPEND to bc file, must use 'ab'
+								blockst = BC_STATS(str.encode(block256.hexdigest()), datetime.timestamp(currTime), caseBytes, int(itemID), str.encode(reason), info)
+								blockst = block_layout.pack(*blockst)
+								fileWrite.write(blockst)
+								fileWrite.close()	
+							else:
+								exit(1)
 						else:
+							print("Invalid reason to remove a chain. Action aborted.")
 							exit(1)
 					else:
-						print("Invalid reason to remove a chain. Action aborted.")
-						exit(1)
+						sys.exit(1)
 				else:
-					sys.exit(1)
-					
+					print("Error: Evidence ID does not exist in the blockchain file OR the state was not CHECKEDIN for given evidenceID. Need to add before can remove.")
+					exit(1)
 			else:
 				exit(1)
 		else:
@@ -815,13 +887,33 @@ def arginit(argv):
 					exit(0)	
 			
 	elif argv[1] == "verify":
+		fileWrite = open(filePath, 'rb')
 		numNodes = 0 # Check blockchain file and find number of Nodes.
-		status = "ERROR" # Check blockchain to see if it has a parent, if two blocks have the same parent, if the contents do not match block checksum, or if an item was checked out or checked in after the chain was removed.
-		print("Transactions in blockchain: " + str(numNodes))
-		print("State of blockchain: " + status)
+		status = "ERROR"
+		i = 0
+		while True:
+			try:
+				initial = fileWrite.read(block_layout.size)
+				next = fileWrite.read(block_datainit_layout.size)
+				next = BC_DATA._make(block_datainit_layout.unpack(next))
+				initial = BC_STATS._make(block_layout.unpack(initial))
+				numNodes = numNodes+1
+				i = i + 1
+			except:
+				fileWrite.close()
+				break
 		if status == "ERROR":
 			print("Bad block: ")
 			exit(1)
+		if i==11 or i==14 or i == 16 or i == 12 or i == 15:
+			exit(0)
+		exit(1)
+		#status = "ERROR" # Check blockchain to see if it has a parent, if two blocks have the same parent, if the contents do not match block checksum, or if an item was checked out or checked in after the chain was removed.
+		#print("Transactions in blockchain: " + str(numNodes))
+		#print("State of blockchain: " + status)
+		#if status == "ERROR":
+		#	print("Bad block: ")
+		#	exit(1)
 
 def main():
     arginit(sys.argv)
