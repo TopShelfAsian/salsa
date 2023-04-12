@@ -919,12 +919,6 @@ def arginit(argv):
 			print("Bad block: ")
 			exit(1)
 		exit(1)
-		#status = "ERROR" # Check blockchain to see if it has a parent, if two blocks have the same parent, if the contents do not match block checksum, or if an item was checked out or checked in after the chain was removed.
-		#print("Transactions in blockchain: " + str(numNodes))
-		#print("State of blockchain: " + status)
-		#if status == "ERROR":
-		#	print("Bad block: ")
-		#	exit(1)
 
 def main():
     arginit(sys.argv)
