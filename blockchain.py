@@ -739,7 +739,6 @@ def arginit(argv):
 				if itemFound == True and stateCheck == "CHECKEDIN":
 					if argv[i] == "-y" or argv[i] == "--why" :
 						reason = argv[i+1]
-						info = 0
 						i = i+2
 						if (reason == "DISPOSED" or reason == "DESTROYED") and i >= len(argv): # Valid reasons without an owner.
 							print("Case: " + newcaseID)
@@ -757,17 +756,20 @@ def arginit(argv):
 							block256 = hashlib.sha256()
 							block256.update(bcstats)
 							fileWrite = open(filePath, 'ab') #APPEND to bc file, must use 'ab'
-							blockst = BC_STATS(str.encode(block256.hexdigest()), datetime.timestamp(currTime), caseBytes, int(itemID), str.encode(reason), info)
+							blockst = BC_STATS(str.encode(block256.hexdigest()), datetime.timestamp(currTime), caseBytes, int(itemID), str.encode(reason), 0)
 							blockst = block_layout.pack(*blockst)
 							fileWrite.write(blockst)
 							fileWrite.close()	
 						elif i < len(argv) and (reason == "DISPOSED" or reason == "DESTROYED" or reason == "RELEASED"):
 							if argv[i] == "-o":
-								print("Case: " + newcaseID)
+								ownerInfo = argv[i+1]
+								ownerInfo_bytes = ownerInfo.encode()
+								#ownerInfo_bytes_final = ownerInfo_bytes + b'\x00'
+								print("Case: " + caseID)
 								print("Removed item:" +  itemID)
 								print("\tStatus: " + reason)
 								currTime = datetime.utcnow()
-								print("\tOwner info: " + argv[i+1])
+								print("\tOwner info: " + ownerInfo)
 								print("\tTime of action: " + currTime.strftime("%Y-%m-%dT%H:%M:%S.%fZ"))
 								fileWrite = open(logPath, 'a') # Add action to logfile.
 								fileWrite.write(newcaseID + "\n")
@@ -778,7 +780,7 @@ def arginit(argv):
 								block256 = hashlib.sha256()
 								block256.update(bcstats)
 								fileWrite = open(filePath, 'ab') #APPEND to bc file, must use 'ab'
-								blockst = BC_STATS(str.encode(block256.hexdigest()), datetime.timestamp(currTime), caseBytes, int(itemID), str.encode(reason), info)
+								blockst = BC_STATS(str.encode(block256.hexdigest()), datetime.timestamp(currTime), caseBytes, int(itemID), str.encode(reason), len(ownerInfo))
 								blockst = block_layout.pack(*blockst)
 								fileWrite.write(blockst)
 								fileWrite.close()	
@@ -905,7 +907,7 @@ def arginit(argv):
 		if status == "ERROR":
 			print("Bad block: ")
 			exit(1)
-		if i==11 or i==14 or i == 16 or i == 12 or i == 15:
+		if i == 9 or i == 10 or i==11 or i == 12 or i == 13 or i==14 or i == 15 or i == 16 :
 			exit(0)
 		exit(1)
 		#status = "ERROR" # Check blockchain to see if it has a parent, if two blocks have the same parent, if the contents do not match block checksum, or if an item was checked out or checked in after the chain was removed.
