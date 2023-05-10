@@ -1,9 +1,9 @@
 # salsa
 Our info:
-    Raul Dayao, 1214758558
-    Taran Rich, 1214822466
-    Cameron Hartman, 1218967347
-    Rachel Guzman, 1219550618
+    Raul Dayao
+    Taran Rich
+    Cameron Hartman
+    Rachel Guzman
 
 Purpose: The blockchain is to emulate the functionality of a chain of command form.
 
